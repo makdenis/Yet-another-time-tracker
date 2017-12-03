@@ -6,8 +6,9 @@ from components.automata import CONTEXT_TASK, CONTEXT_COMMANDS
 from services import user_service, task_service
 from config.state_config import State
 import datetime
-
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from utils import handler_utils
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 
 def states():
@@ -45,7 +46,26 @@ def all_tasks_state(bot, update, context):
         update.message.reply_text('Just write me something to create a new one :)')
 
     else:
-        update.message.reply_text(first_name + ', here are your tasks:\n' + '\n'.join(tasks_to_show))
+        keyboard = []
+        id = 1
+        for task in tasks_to_show:
+            keyboard.append([InlineKeyboardButton(str(task), callback_data=str(id))])
+            id = id + 1
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.message.reply_text(first_name + ', here are your tasks:\n', reply_markup=reply_markup)
+
+
+def button(bot, update):
+    query = update.callback_query
+    task_id = query.data
+    chat = query.message.chat
+    user = user_service.create_or_get_user(chat)
+    task = task_service.find_task_by_id_and_user_id(task_id, user.get_id())
+    #context[CONTEXT_TASK] = task
+    task_descr = task.get_description()
+    bot.edit_message_text(text=f'[{task_id}]: {task_descr}',
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id)
 
 
 def new_task_state(bot, update, context):

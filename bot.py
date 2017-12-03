@@ -1,3 +1,4 @@
+
 """
 Created by anthony on 15.10.17
 Main bot file
@@ -6,10 +7,11 @@ Should just assemble and run bot
 """
 from telegram.ext import Updater
 import logging
-
+from telegram.ext import CallbackQueryHandler
 from components.automata import Automata
 from config import bot_config
 import handlers.interaction_handler
+import services.state_service
 from config.db_config import init_db
 import g
 
@@ -38,7 +40,7 @@ def init_bot():
 
     # handlers are invoked till the first match
     dispatcher.add_handler(handlers.interaction_handler.command_handler())
-
+    dispatcher.add_handler(CallbackQueryHandler(services.state_service.button))
     # runs
     g.updater.start_polling()
     log.info('Bot has started')
