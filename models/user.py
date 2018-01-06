@@ -5,8 +5,10 @@ user
 from sqlalchemy import BigInteger, Column, String, Boolean
 from config.db_config import Base
 
+from models.abstract_entity import AbstractEntity
 
-class User(Base):
+
+class User(Base, AbstractEntity):
     __tablename__ = 'users'
     # user's id is his chat_id
     id              = Column(BigInteger, primary_key=True)
@@ -16,6 +18,7 @@ class User(Base):
     is_active       = Column(Boolean, default=True)
 
     def __init__(self, username, chat_id, first_name):
+        super().__init__()
         self.set_username(username)
         self.set_id(chat_id)
         self.set_first_name(first_name.capitalize())

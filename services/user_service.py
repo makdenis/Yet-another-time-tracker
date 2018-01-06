@@ -2,24 +2,25 @@
 Created by anthony on 23.10.17
 user_service.py
 """
-import datetime
 import logging
 
-from models.task import Task
-from models.project import Project
 from models.user import User
-from utils.service_utils import save, flush, find_all, find_one_by_id
+from utils.db_utils import save, flush, find_all, find_one_by_id
 
 
 log = logging.getLogger(__name__)
 
 
-def find_one_by_username(username):
+def find_user_by_username(username):
     users = find_all(User)
     for u in users:
         if username == u.get_username():
             return u
     return None
+
+
+def find_user_by_id(user_id):
+    return find_one_by_id(user_id, User)
 
 
 def create_or_get_user(chat):
@@ -42,3 +43,8 @@ def create_or_get_user(chat):
         log.debug('Saving user')
         saved_user = save(user)
         return saved_user
+
+
+def update_user(user):
+    saved_user = save(user)
+    return saved_user

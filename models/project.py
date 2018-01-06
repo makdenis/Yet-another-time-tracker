@@ -2,11 +2,22 @@
 Created by anthony on 19.10.17
 project
 """
+from enum import Enum
+
 from sqlalchemy import BigInteger, Column, String, ForeignKey, Boolean
 from config.db_config import Base
 
+from models.abstract_entity import AbstractEntity
 
-class Project(Base):
+
+class ProjectType(Enum):
+    OTHER = 'oth'
+    PERSONAL = 'prs'
+    STUDY = 'std'
+    WORK = 'wrk'
+
+
+class Project(Base, AbstractEntity):
     __tablename__ = 'projects'
     id                  = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
     # category e.g. personal / university / work
@@ -17,8 +28,9 @@ class Project(Base):
     # safe delete flag
     is_active           = Column(Boolean, default=True)
 
-    def __init__(self, title, user_id):
-        self.set_title(title)
+    def __init__(self, user_id, title):
+        super().__init__()
+        self.set_title(ProjectType.OTHER.value if title is None else title)
         self.set_user_id(user_id)
 
     def get_id(self):

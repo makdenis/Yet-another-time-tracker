@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 DB_NAME = 'yatt_db'
 DB_USER = 'yatt_user'
 DB_PASSWORD = 'root'
-DB_HOST = 'localhost' if g.dev_mode else 'postgres'    # container name from docker-compose
+DB_HOST = 'localhost' if (g.dev_mode or g.test_mode) else 'postgres'    # container name from docker-compose
 DB_PORT = 5432
 
 

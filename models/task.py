@@ -7,33 +7,36 @@ from config.db_config import Base
 import datetime
 import logging
 
+from models.abstract_entity import AbstractEntity
 from services import notification_service as ns
 
 
 log = logging.getLogger(__name__)
 
 
-class Task(Base):
+class Task(Base, AbstractEntity):
     __tablename__ = 'tasks'
     # task props
     id                  = Column(BigInteger, primary_key=True, autoincrement=True, nullable=False)
     description         = Column(String, nullable=False)
+    is_completed        = Column(Boolean, default=False)
     priority            = Column(SmallInteger, default=1)
-    create_date         = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    create_date         = Column(DateTime, nullable=False)
     project_id          = Column(BigInteger, ForeignKey('projects.id'), nullable=False)
     # message props
     message_text        = Column(String)
     user_id             = Column(BigInteger, ForeignKey('users.id'), nullable=False)
     # reminder props
-    start_date          = Column(DateTime, default=datetime.datetime.utcnow)
+    start_date          = Column(DateTime)
     end_date            = Column(DateTime)
     next_remind_date    = Column(DateTime)
+    is_enabled          = Column(Boolean, default=True)
     is_periodic         = Column(Boolean, default=False)
     # safe delete flag
     is_active           = Column(Boolean, default=True)
 
     def __init__(self, description, user_id, project_id):
-        # TODO get data from message (remove date?)
+        super().__init__()
         self.set_description(description.capitalize())
         self.set_user_id(user_id)
         self.set_project_id(project_id)
@@ -42,6 +45,10 @@ class Task(Base):
         # original message
         self.set_message_text(description)
         self.notification_job = None
+        self.next_remind_date = None
+        # explicitly setting current datetime from python since postgres writes in UTC by default
+        self.create_date = datetime.datetime.now()
+        self.start_date = datetime.datetime.now()
 
     def get_id(self):
         return self.id
@@ -69,8 +76,17 @@ class Task(Base):
     def set_project_id(self, proj_id):
         self.project_id = proj_id
 
+    def get_priority(self):
+        return self.priority
+
     def set_priority(self, prior):
         self.priority = prior
+
+    def increase_priority(self, value=1):
+        self.priority += value
+
+    def decrease_priority(self, value=1):
+        self.priority -= value
 
     def set_message_text(self, msg_text):
         if not msg_text:
@@ -92,14 +108,35 @@ class Task(Base):
         if next_remind_date < datetime.datetime.now():
             raise ValueError('Next remind date cannot be in past')
 
+        self.next_remind_date = next_remind_date
+
         log.info(f'Creating notification for task {self.id}')
-        notification = ns.create_notification(self.get_user_id(), self.description, next_remind_date)
+        notification = ns.create_notification(self.get_user_id(), self)
 
         if notification is None:
             log.error(f'Notification is none for task id {self.id}')
 
         self.notification_job = notification
-        self.next_remind_date = next_remind_date
+        self.mark_as_enabled()
 
-    def set_is_periodic(self, periodic_flag):
-        self.is_periodic = periodic_flag
+
+    def mark_as_periodic(self):
+        self.is_periodic = True
+
+    def mark_as_completed(self):
+        self.is_completed = True
+
+    def mark_as_not_completed(self):
+        self.is_completed = False
+
+    def is_task_completed(self):
+        return self.is_completed
+
+    def mark_as_disabled(self):
+        self.is_enabled = False
+
+    def mark_as_enabled(self):
+        self.is_enabled = True
+
+    def is_task_enabled(self):
+        return self.is_enabled

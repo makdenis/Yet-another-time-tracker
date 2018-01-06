@@ -1,3 +1,4 @@
 python-telegram-bot==8.1.1
 sqlalchemy==1.1.14
 psycopg2==2.7.3.1
+emoji==0.4.5

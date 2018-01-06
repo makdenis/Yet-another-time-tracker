@@ -15,10 +15,13 @@ services:
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
 
-  bot:
-    build: .
-    ports:
-      - "80:80"
-    depends_on:
-      - postgres
-    restart: always
+#  bot:
+#    build: .
+#    environment:
+#      - TOKEN=paste_your_token_here
+#      - BOT_ENV=dev
+#    ports:
+#      - "80:80"
+#    depends_on:
+#      - postgres
+#    restart: always

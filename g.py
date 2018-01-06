@@ -25,5 +25,6 @@ log.info(f'BOT_ENV set to "{BOT_ENV}" mode')
 
 dev_mode = 'dev' == BOT_ENV
 prod_mode = 'prod' == BOT_ENV
+test_mode = 'test' == BOT_ENV
 
 log.info('Globals have started')

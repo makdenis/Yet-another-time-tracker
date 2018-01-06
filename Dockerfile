@@ -14,6 +14,10 @@ EXPOSE 80
 
 # Define environment variable
 ENV BOT_ENV prod
+ENV TZ=Europe/Moscow
+
+# Setting up correct datetime for moscow
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Run app.py when the container launches
 CMD ["python3", "bot.py"]

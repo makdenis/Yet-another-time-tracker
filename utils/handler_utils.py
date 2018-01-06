@@ -2,60 +2,9 @@
 Created by anthony on 15.10.17
 handler_utils
 """
-from time import gmtime, strftime, time
-import datetime
+import json
 
-from config.state_config import CommandType, CommandAliases
-
-
-def current_time():
-    return strftime("%H:%M %d-%m-%Y", gmtime())
-
-
-# decorator from lecture
-def add_timestamp(func):
-    def inner_func(text_arg):
-        ret = func(f'{text_arg} ...sent on {current_time()}')
-        return ret
-
-    return inner_func
-
-
-def log_duration(func):
-    def inner_func(*args):
-        start_time = time()
-        ret = func(args)
-
-        print(f'execution time: {time() - start_time} seconds')
-
-        return ret
-
-    return inner_func
-
-
-def parse_date_msg(basedate):
-
-    day = basedate[0]
-    month = basedate[1]
-
-    months = ['янв', 'фев', 'мар', 'апр', 'мая', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек']
-    month_prefix = month[0: 3]  # декабрь ->дек, дек -> дек
-    if month_prefix in months:
-        num = str(months.index(month_prefix) + 1)  # 11+1 -> '12'
-        if len(num) < 2:
-            num = '0' + num
-    if month_prefix not in months:
-        raise ValueError('Could not recognize provided month')
-
-    if basedate[-1][0: 3] in months:
-        time='0.01'
-    else:
-        time = str(basedate[2]).replace(":", '.').replace("-", '.')
-
-    date_line = str(day) + ' ' + str(num) + ' ' + str(datetime.date.today().year) + ' ' + time
-
-    parse_date = datetime.datetime.strptime(date_line, "%d %m %Y %H.%M")
-    return parse_date
+from config.state_config import CommandType, CommandAliases, Action, CallbackData
 
 
 def get_command_type(text):
@@ -71,3 +20,35 @@ def get_command_type(text):
                     return command_type
 
         raise ValueError('Command not recognized')
+
+
+def deserialize_data(data):
+    """
+    deserialize callback data into Action, CommandType, data
+    """
+    deserialized = json.loads(data)
+    action = Action(deserialized[CallbackData.ACTION.value])
+    command = CommandType(deserialized[CallbackData.COMMAND.value])
+    data = deserialized[CallbackData.DATA.value]
+    return {
+        CallbackData.ACTION: action,
+        CallbackData.COMMAND: command,
+        CallbackData.DATA: data
+    }
+
+
+def is_callback(update):
+    return update.callback_query is not None
+
+
+def get_latest_list_action(actions):
+    actions_to_be_found = [Action.LIST_ALL, Action.LIST_COMPLETED, Action.LIST_UPCOMING]
+
+    actions_list = list(actions)
+    i = len(actions_list) - 1
+    while i >= 0:
+        act = actions_list[i]
+        if act in actions_to_be_found:
+            return act
+
+    return Action.LIST_ALL
